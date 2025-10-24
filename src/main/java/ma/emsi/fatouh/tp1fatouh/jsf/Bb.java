@@ -6,6 +6,7 @@ import jakarta.faces.model.SelectItem;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import ma.emsi.fatouh.tp1fatouh.llm.JsonUtilPourGemini;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -63,6 +64,10 @@ public class Bb implements Serializable {
     private String texteReponseJson;
 
     private boolean debug;
+
+    @Inject
+    private JsonUtilPourGemini jsonUtil;
+
 
     /**
      * Obligatoire pour un bean CDI (classe gérée par CDI), s'il y a un autre constructeur.
@@ -127,18 +132,25 @@ public class Bb implements Serializable {
             facesContext.addMessage(null, message);
             return null;
         }
-        // Entourer la réponse avec "||".
-        this.reponse = "||";
-        // Si la conversation n'a pas encore commencé, ajouter le rôle système au début de la réponse
-        if (this.conversation.isEmpty()) {
-            // Ajouter le rôle système au début de la réponse
-            this.reponse += roleSysteme.toUpperCase(Locale.FRENCH) + "\n";
-            // Invalide le bouton pour changer le rôle système
-            this.roleSystemeChangeable = false;
+
+        try {
+            // Si première question, on précise le rôle système
+            if (conversation.isEmpty()) {
+                jsonUtil.setSystemRole(roleSysteme);
+                this.roleSystemeChangeable = false;
+            }
+
+            var interaction = jsonUtil.envoyerRequete(question);
+            this.reponse = interaction.reponseExtraite();
+            this.texteRequeteJson = interaction.questionJson();
+            this.texteReponseJson = interaction.reponseJson();
+            afficherConversation();
+
+        } catch (Exception e) {
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Problème de connexion avec l'API du LLM", e.getMessage());
+            facesContext.addMessage(null, message);
         }
-        this.reponse += question.toLowerCase(Locale.FRENCH) + "||";
-        // La conversation contient l'historique des questions-réponses depuis le début.
-        afficherConversation();
         return null;
     }
 
