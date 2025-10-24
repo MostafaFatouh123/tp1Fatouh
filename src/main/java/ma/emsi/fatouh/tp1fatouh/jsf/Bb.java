@@ -204,6 +204,11 @@ public class Bb implements Serializable {
                     are you tell them the average price of a meal.
                     """;
             this.listeRolesSysteme.add(new SelectItem(role, "Guide touristique"));
+
+            role = """
+                    Tu es un experte mathématicienne tu réponde de manière simple sur les questions des utilisateurs.
+                    """;
+            this.listeRolesSysteme.add(new SelectItem(role, "Expert Mathématicienne"));
         }
 
         return this.listeRolesSysteme;
